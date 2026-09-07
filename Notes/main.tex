@@ -1,0 +1,365 @@
+\documentclass[12pt,a4paper]{article}
+
+% ---------------- ОПРЕДЕЛЕНИЕ ДВИЖКА ----------------
+\usepackage{iftex}
+
+% ---------------- ШРИФТЫ И КОДИРОВКИ ----------------
+\ifPDFTeX
+  \usepackage[utf8]{inputenc}
+  \usepackage[T2A,T1]{fontenc}
+  \usepackage{lmodern}
+\else
+  \usepackage{fontspec}
+  \defaultfontfeatures{Ligatures=TeX}   % --- , ``'' работают как в обычном TeX
+  % CM Unicode: те же формы, что у Computer Modern, но с кириллицей.
+  % Шрифты задаются именами файлов, поэтому не требуют установки в систему.
+  \setmainfont{cmunrm.otf}[
+    BoldFont       = cmunbx.otf,
+    ItalicFont     = cmunti.otf,
+    BoldItalicFont = cmunbi.otf]
+  \setsansfont{cmunss.otf}[
+    BoldFont       = cmunsx.otf,
+    ItalicFont     = cmunsi.otf,
+    BoldItalicFont = cmunso.otf]
+  \setmonofont{cmuntt.otf}[
+    BoldFont       = cmuntb.otf,
+    ItalicFont     = cmunit.otf,
+    BoldItalicFont = cmuntx.otf]
+\fi
+
+\usepackage[russian, english]{babel}   % грузить ПОСЛЕ fontspec/fontenc
+
+% ---------------- МАТЕМАТИКА ----------------
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+
+\numberwithin{equation}{section}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Теорема}[section]
+\newtheorem{lemma}[theorem]{Лемма}
+\newtheorem{proposition}[theorem]{Утверждение}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Определение}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Замечание}
+
+% ---------------- ВЁРСТКА ----------------
+\usepackage[top=1in, bottom=1in, left=0.5in, right=0.5in]{geometry}
+\ifPDFTeX
+  \usepackage[protrusion=true, expansion=true]{microtype}
+\else
+  \usepackage[protrusion=true, expansion=false]{microtype}
+\fi
+\usepackage{indentfirst}
+\usepackage{setspace}
+
+% ---------------- СПИСКИ, ТАБЛИЦЫ, РИСУНКИ ----------------
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{graphicx}
+\usepackage{subcaption}
+
+% ---------------- ОГЛАВЛЕНИЕ ----------------
+\usepackage{tocloft}
+\renewcommand{\cftsecpagefont}{\bfseries}
+
+% ---------------- ССЫЛКИ ----------------
+\usepackage[unicode=true, colorlinks=true,
+            linkcolor=blue, urlcolor=blue, citecolor=blue]{hyperref}
+
+\title{Эконометрика. Лекции и семинары}
+\author{Баулин Евгений}
+\date{\today}
+
+\begin{document}
+\selectlanguage{russian}
+
+\maketitle
+\tableofcontents
+\clearpage
+
+\section{Вводная часть. 7 сентября 2026}
+
+Лектора зовут Анна Жимерикина
+
+Telegram: \href{https://t.me/ann_zhi}{\texttt{@ann\_zhi}}
+
+Email: \href{mailto:aj.zhimerikina@physics.msu.ru}{\nolinkurl{aj.zhimerikina@physics.msu.ru}}
+
+О всех изменениях о парах будут сообщать в ТГК: \href{https://t.me/ftiad_econ}{\texttt{@ftiad\_econ}}
+
+Правила посещения:
+
+Отметок о посещении нет, поэтому посещение свободное (можно приходить, а можно и не приходить)
+
+Тесты на семинарах как доп к оценке, то есть не писав их всё ещё можно получить $10$. Тесты дадут максимум $1-1.5$
+
+Ровно в 9 pm заканчивается
+
+Программировать будем только на Python
+
+$$
+    \text{Итоговая оценка} = 0.3 * \text{ДЗ}_1 + 0.4 * \text{ДЗ}_2 + 0.3 * \text{КР}
+$$
+
+Можно просто написать в ЛС лектору, чтобы получить 4 за курс и не ходить на пары
+
+Материалы: \href{https://drive.google.com/drive/folders/1e8s9vTZWyk2HHJh6tHfEJ-FtTs13sTG0}{\texttt{Google Drive}}
+
+Ноутбук — опционально, можно не приносить, будут показывать экран
+
+\section{Лекция и семинар. 7 сентября 2026}
+
+\subsection{Зачем нужна эконометрика, когда есть продвинутое машинное обучение}
+
+\begin{itemize}
+    \item Когда данных очень мало, а результат нужно получить сейчас
+    \item Когда нужно полностью интерпретировать модель
+    \item Всякие экономические модели
+\end{itemize}
+
+\subsection{Типы данных в эконометрике}
+
+\begin{itemize}
+    \item Временные ряды (time-series data)
+    \item Пространственные данные (cross-sectional data)
+    \item Панельные данные (panel data)
+\end{itemize}
+
+Примеры смотреть в файле Лекция 1.pdf
+
+\subsection{Глоссарий}
+
+Всё, что $y$ — target, целевая переменная, зависимая переменная, объясняемая переменная
+
+Остальное — регрессоры, объясняющие переменные, features, признаки
+
+По каждой переменной $n$ наблюдений $y_1, y_2, \dots, y_n$
+
+\subsection{Пример эконометрической задачи}
+
+Как скорость машины влияет на длину тормозного пути? На каком расстоянии от пешеходного перехода установить знак?
+
+Данные: Ezekiel, M. (1930) Methods of Correlation Analysis. Wiley (классический датасет \texttt{cars}: скорость в милях в час и длина тормозного пути в футах)
+
+График смотреть в файле Лекция 1.pdf
+
+\subsection{Модель}
+
+Пусть мы знаем, что в реальности данные связаны следующим образом:
+
+$$
+    y_i = \beta_1 + \beta_2 x_i + \varepsilon_i
+$$
+
+\begin{itemize}
+    \item Наблюдаемые нами переменные (наш датасет): $y, x$
+    \item Неизвестные параметры: $\beta_1, \beta_2$. Они существуют, но наблюдать мы их не можем
+    \item Случайная составляющая, ошибка: $\varepsilon$
+\end{itemize}
+
+Ошибка возникает из-за несовершенства реальности:
+
+\begin{itemize}
+    \item Ошибки измерений
+    \item Неопределённость человеческого поведения
+    \item Неучёт влияния бесчисленного множества случайных событий
+\end{itemize}
+
+Чтобы строить модели нужно включить здравый смысл и понять, что ошибка в измерениях — это нормально. Не нужно добавлять всё, что угодно (цену курицы, цвет машины и ТП)
+
+$\beta_1 + \beta_2 x_i$ — детерминированная часть
+
+$\varepsilon_i$ — стохастическая часть
+
+\subsection{Задача эконометрики}
+
+План действий:
+
+\begin{enumerate}
+    \item Придумать адекватную модель (так как реальное устройство мира нам неизвестно, но мы можем лишь делать предложение)
+    \item Получить оценки неизвестных параметров: $\hat{\beta_1}, \hat{\beta_2}$
+    \item Прогнозировать, заменив неизвестные параметры на оценки: $\hat{y_i} = \hat{\beta_1} + \hat{\beta_2}x_i$
+\end{enumerate}
+
+\subsection{Метод наименьших квадратов (МНК)}
+
+Нужен способ получить оценки неизвестных параметров модели исходя из реальных данных
+
+Ошибка прогноза: $\hat{e_i} = y_i - \hat{y_i}$
+
+Сумма квадратов ошибок прогноза:
+$$
+    Q \left(\hat{\beta_1}, \hat{\beta_2}\right) = \sum_{i = 1}^n \hat{e_i}^2 = \sum_{i = 1}^n \left(y_i - \hat{y_i}\right)^2
+$$
+
+Суть МНК: В качестве оценок взять такие $\hat{\beta_1}, \hat{\beta_2}$, при которых сумма квадратов ошибок прогноза $Q$ минимальна
+
+\subsection{Частные случаи МНК}
+
+\subsubsection{Регрессия на константу}
+
+В модели $y_i = \beta + \varepsilon_i$: $\hat{\beta} = \bar{y}$
+
+Интерпретация: В модели без объясняющих переменных наилучший прогноз — это среднее значение зависимой переменной
+
+\subsubsection{Парная регрессия}
+
+Модель с константой и одной независимой переменной
+
+В модели $y_i = \beta_1 + \beta_2 x_i + \varepsilon_i$
+
+\begin{gather*}
+    \hat{\beta_2} = \frac{\sum \left(x_i - \bar{x}\right)\left(y_i - \bar{y}\right)}{\sum \left(x_i - \bar{x}\right)^2} = \frac{s Cov (x, y)}{s Var(x)} \\
+    \hat{\beta_1} = \bar{y} - \hat{\beta_2}\bar{x}
+\end{gather*}
+
+Замечательное свойство: Точка $\left(\bar{x}, \bar{y}\right)$ лежит на линии регрессии $\hat{y_i} = \hat{\beta_1} + \hat{\beta_2} x$
+
+\subsection{Терминология и обозначения}
+
+\begin{itemize}
+    \item $y_i$ — таргет, зависимая, объясняемая переменная
+    \item $x_i$ — feature, регрессор, независимая, объясняющая переменная
+    \item $\varepsilon$ - ошибка (несовершенство мира), случайная составляющая
+    \item $\hat{y_i}$ — прогноз, прогнозное значение
+    \item $\hat{e_i} = y_i - \hat{y_i}$ — остаток, ошибка прогноза (не путайте с $\varepsilon$)
+    \item $RSS = \sum_{i = 1}^{n} \hat{e_i}^2$ — сумма квадратов остатков
+\end{itemize}
+
+\subsection{Случай множественной регрессии}
+
+Регрессоров может быть несколько, поэтому модель удобно записывать в матричном виде
+
+Вектор зависимой переменной, вектор прогнозных значений и вектор случайных ошибок:
+$$
+    y = \begin{pmatrix} y_1 \\ y_2 \\ \vdots \\ y_n \end{pmatrix}, \qquad
+    \hat{y} = \begin{pmatrix} \hat{y_1} \\ \hat{y_2} \\ \vdots \\ \hat{y_n} \end{pmatrix}, \qquad
+    \varepsilon = \begin{pmatrix} \varepsilon_1 \\ \varepsilon_2 \\ \vdots \\ \varepsilon_n \end{pmatrix}
+$$
+
+Матрица регрессоров (первый столбец — константа), вектор коэффициентов и вектор их оценок:
+$$
+    X = \begin{pmatrix}
+        1      & x_1    & z_1    \\
+        1      & x_2    & z_2    \\
+        \vdots & \vdots & \vdots \\
+        1      & x_n    & z_n
+    \end{pmatrix}, \qquad
+    \beta = \begin{pmatrix} \beta_1 \\ \beta_2 \\ \beta_3 \end{pmatrix}, \qquad
+    \hat{\beta} = \begin{pmatrix} \hat{\beta_1} \\ \hat{\beta_2} \\ \hat{\beta_3} \end{pmatrix}
+$$
+
+Спецификация модели:
+$$
+    y = X\beta + \varepsilon
+$$
+
+\subsubsection{Минимизация суммы квадратов остатков}
+
+Вектор остатков: $e = y - \hat{y} = y - X\hat{\beta}$
+
+Сумма квадратов остатков: $RSS = \sum \hat{e_i}^2 = e'e \to \min$
+
+Выразим $e'e$ через $X$ и $\hat{\beta}$:
+\begin{gather*}
+    e'e = \left(y - X\hat{\beta}\right)'\left(y - X\hat{\beta}\right) = \\
+    = y'y - y'X\hat{\beta} - \hat{\beta}'X'y + \hat{\beta}'X'X\hat{\beta} = \\
+    = y'y - 2\hat{\beta}'X'y + \hat{\beta}'X'X\hat{\beta}
+\end{gather*}
+
+Слагаемые $y'X\hat{\beta}$ и $\hat{\beta}'X'y$ — это числа (матрицы размера $1 \times 1$), причём одно транспонировано к другому, поэтому они равны и складываются в $2\hat{\beta}'X'y$
+
+\subsubsection{Оценка метода наименьших квадратов}
+
+Необходимые условия минимума $RSS$ получаются дифференцированием по вектору $\hat{\beta}$:
+$$
+    \frac{\partial RSS}{\partial \hat{\beta}} = -2X'y + 2X'X\hat{\beta} = 0
+$$
+
+Решая уравнение, получаем оценку метода наименьших квадратов:
+$$
+    \hat{\beta}_{OLS} = \left(X'X\right)^{-1}X'y
+$$
+
+Предположение: матрица $X'X$ обратима (столбцы $X$ линейно независимы)
+
+Если это не так (полная мультиколлинеарность), то оценка МНК не единственна
+
+\subsection{Суммы квадратов}
+
+\begin{itemize}
+    \item Сумма квадратов остатков, $RSS$ (residual sum of squares):
+          $$
+              RSS = \sum \hat{e_i}^2
+          $$
+    \item Общая сумма квадратов, $TSS$ (total sum of squares) — вся дисперсия:
+          $$
+              TSS = \sum \left(y_i - \bar{y}\right)^2
+          $$
+    \item Объяснённая сумма квадратов, $ESS$ (explained sum of squares):
+          $$
+              ESS = \sum \left(\hat{y_i} - \bar{y}\right)^2
+          $$
+\end{itemize}
+
+Интерпретация $ESS$: $ESS$ измеряет, насколько хорошо модель объяснила вариацию $y$ по сравнению с простым средним $\bar{y}$. Чем больше доля $ESS$ в $TSS$, тем лучше модель описывает данные
+
+\subsection{Если в регрессию включён свободный член}
+
+Если в регрессию включён свободный член, $y_i = \beta_1 + \dots$, и оценки МНК единственны, то:
+
+\begin{itemize}
+    \item $\sum \hat{e_i} = 0$
+    \item $\sum y_i = \sum \hat{y_i}$
+    \item $\bar{y} = \overline{\hat{y}}$
+    \item $TSS = RSS + ESS$
+\end{itemize}
+
+$$
+    \underbrace{\sum \left(y_i - \bar{y}\right)^2}_{TSS} = \underbrace{\sum \left(y_i - \hat{y_i}\right)^2}_{RSS} + \underbrace{\sum \left(\hat{y_i} - \bar{y}\right)^2}_{ESS}
+$$
+
+\subsection{Коэффициент детерминации — простой показатель качества}
+
+Коэффициентом детерминации, или долей объяснённой дисперсии, называется
+$$
+    R^2 = 1 - \frac{RSS}{TSS} = \frac{ESS}{TSS}
+$$
+
+В силу определения $R^2$ принимает значения между $0$ и $1$: $0 \leqslant R^2 \leqslant 1$
+
+\begin{itemize}
+    \item $R^2 = 0$ означает, что регрессия ничего не даёт, то есть $x_i$ не улучшает качество предсказания $y_i$ по сравнению с тривиальным предсказанием $\hat{y_i} = \bar{y}$
+    \item $R^2 = 1$ означает точную подгонку: все точки наблюдений лежат на регрессионной прямой (все $\hat{e_i} = 0$)
+\end{itemize}
+
+Важное замечание: $0 \leqslant R^2 \leqslant 1$ выполняется только при прогнозировании in sample. При прогнозе out-of-sample $R^2$ может принимать значения из $(-\infty; 1]$, то есть прогнозировать хуже выборочного среднего $\bar{y}$
+
+Теорема: если в регрессию включён свободный член, $y_i = \beta_1 + \dots$, и оценки МНК единственны, то $R^2$ равен квадрату выборочной корреляции между $y$ и $\hat{y}$:
+$$
+    R^2 = \left(sCorr\left(y, \hat{y}\right)\right)^2 = \left(\frac{\sum \left(y_i - \bar{y}\right)\left(\hat{y_i} - \bar{y}\right)}{\sqrt{\sum \left(y_i - \bar{y}\right)^2} \sqrt{\sum \left(\hat{y_i} - \bar{y}\right)^2}}\right)^2
+$$
+
+\subsubsection{Коэффициент детерминации в общем случае}
+
+$$
+    R^2 \left(y, \hat{y}\right) = 1 - \frac{\sum_{i = 1}^n \left(y_i - \hat{y_i}\right)^2}{\sum_{i = 1}^n \left(y_i - \bar{y}\right)^2} = 1 - \frac{MSE}{Var(y)}
+$$
+
+\begin{itemize}
+    \item $MSE$ может быть бесконечно большой величиной
+    \item В библиотеке \texttt{sklearn} эта формула реализована в \texttt{sklearn.metrics.r2\_score}
+\end{itemize}
+
+Из документации \texttt{sklearn}: функция не симметрична, и, в отличие от большинства других метрик, $R^2$ может быть отрицательным (он не обязан быть квадратом какой-либо величины $R$)
+
+\subsection{Литература}
+
+\begin{itemize}
+    \item Магнус Я.Р., Катышев П.К., Пересецкий А.А. Эконометрика. Начальный курс: Учеб. — 9-е изд., испр. — М.: Издательский дом «Дело» РАНХиГС, 2021. — 504 с. Главы: 1, 2.1, 2.2, 2.6
+    \item Грин У.Г. Эконометрический анализ. Кн. 1 / У. Грин; пер. с англ.; под науч. ред. С.С. Синельникова, М.Ю. Турунцевой. — М.: Издательский дом «Дело» РАНХиГС, 2016. — 760 с. (Академический учебник). ISBN 978-5-7749-1157-8. Главы: 2.1, 2.2
+\end{itemize}
+
+\end{document}
