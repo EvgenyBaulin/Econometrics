@@ -24,7 +24,8 @@
   \setmonofont{cmuntt.otf}[
     BoldFont       = cmuntb.otf,
     ItalicFont     = cmunit.otf,
-    BoldItalicFont = cmuntx.otf]
+    BoldItalicFont = cmuntx.otf,
+    Mapping        = {}]   % иначе апострофы в verbatim станут типографскими
 \fi
 
 \usepackage[russian, english]{babel}   % грузить ПОСЛЕ fontspec/fontenc
@@ -167,7 +168,7 @@ $$
     \item Неучёт влияния бесчисленного множества случайных событий
 \end{itemize}
 
-Чтобы строить модели нужно включить здравый смысл и понять, что ошибка в измерениях — это нормально. Не нужно добавлять всё, что угодно (цену курицы, цвет машины и ТП)
+Чтобы строить модели нужно включить здравый смысл и понять, что ошибка в измерениях~— это нормально. Не нужно добавлять всё, что угодно (цену курицы, цвет машины и т.\,п.)
 
 $\beta_1 + \beta_2 x_i$ — детерминированная часть
 
@@ -178,7 +179,7 @@ $\varepsilon_i$ — стохастическая часть
 План действий:
 
 \begin{enumerate}
-    \item Придумать адекватную модель (так как реальное устройство мира нам неизвестно, но мы можем лишь делать предложение)
+    \item Придумать адекватную модель (так как реальное устройство мира нам неизвестно, мы можем лишь делать предположение)
     \item Получить оценки неизвестных параметров: $\hat{\beta_1}, \hat{\beta_2}$
     \item Прогнозировать, заменив неизвестные параметры на оценки: $\hat{y_i} = \hat{\beta_1} + \hat{\beta_2}x_i$
 \end{enumerate}
@@ -355,11 +356,250 @@ $$
 
 Из документации \texttt{sklearn}: функция не симметрична, и, в отличие от большинства других метрик, $R^2$ может быть отрицательным (он не обязан быть квадратом какой-либо величины $R$)
 
-\subsection{Литература}
+\subsection{Разбор с семинара}
+
+На семинаре выводим формулы, которые на лекции были даны в готовом виде, и считаем всё то же самое руками и на Python
+
+\subsubsection{Что нужно помнить из теории вероятностей и статистики}
+
+Все формулы МНК записываются через выборочные моменты. Для выборок $x_1, \dots, x_n$ и $y_1, \dots, y_n$:
 
 \begin{itemize}
-    \item Магнус Я.Р., Катышев П.К., Пересецкий А.А. Эконометрика. Начальный курс: Учеб. — 9-е изд., испр. — М.: Издательский дом «Дело» РАНХиГС, 2021. — 504 с. Главы: 1, 2.1, 2.2, 2.6
-    \item Грин У.Г. Эконометрический анализ. Кн. 1 / У. Грин; пер. с англ.; под науч. ред. С.С. Синельникова, М.Ю. Турунцевой. — М.: Издательский дом «Дело» РАНХиГС, 2016. — 760 с. (Академический учебник). ISBN 978-5-7749-1157-8. Главы: 2.1, 2.2
+    \item Выборочное среднее: $\bar{x} = \frac{1}{n}\sum_{i = 1}^n x_i$
+    \item Выборочная дисперсия: $sVar(x) = \frac{1}{n}\sum_{i = 1}^n \left(x_i - \bar{x}\right)^2$
+    \item Выборочная ковариация: $sCov(x, y) = \frac{1}{n}\sum_{i = 1}^n \left(x_i - \bar{x}\right)\left(y_i - \bar{y}\right)$
+    \item Выборочная корреляция: $sCorr(x, y) = \dfrac{sCov(x, y)}{\sqrt{sVar(x)}\sqrt{sVar(y)}}$
 \end{itemize}
+
+Замечание: в формуле для $\hat{\beta_2}$ множители $\frac{1}{n}$ в числителе и знаменателе сокращаются, поэтому не важно, делить суммы на $n$ или на $n - 1$ — оценка коэффициента от этого не изменится
+
+Тождества, которые постоянно используются в выкладках:
+
+\begin{itemize}
+    \item $\sum \left(x_i - \bar{x}\right) = 0$
+    \item $\sum \left(x_i - \bar{x}\right)\left(y_i - \bar{y}\right) = \sum \left(x_i - \bar{x}\right) y_i = \sum x_i y_i - n \bar{x}\bar{y}$
+    \item $\sum \left(x_i - \bar{x}\right)^2 = \sum x_i \left(x_i - \bar{x}\right) = \sum x_i^2 - n\bar{x}^2$
+\end{itemize}
+
+\subsubsection{Вывод МНК-оценки: регрессия на константу}
+
+Модель $y_i = \beta + \varepsilon_i$, прогноз $\hat{y_i} = \hat{\beta}$. Минимизируем
+$$
+    Q\left(\hat{\beta}\right) = \sum_{i = 1}^n \left(y_i - \hat{\beta}\right)^2
+$$
+
+Необходимое условие минимума:
+$$
+    \frac{dQ}{d\hat{\beta}} = -2\sum_{i = 1}^n \left(y_i - \hat{\beta}\right) = 0
+    \quad \Longrightarrow \quad
+    \sum_{i = 1}^n y_i = n\hat{\beta}
+    \quad \Longrightarrow \quad
+    \hat{\beta} = \bar{y}
+$$
+
+Это действительно минимум: $\dfrac{d^2 Q}{d\hat{\beta}^2} = 2n > 0$, то есть $Q$ строго выпукла
+
+\subsubsection{Вывод МНК-оценок: парная регрессия}
+
+Модель $y_i = \beta_1 + \beta_2 x_i + \varepsilon_i$, прогноз $\hat{y_i} = \hat{\beta_1} + \hat{\beta_2} x_i$. Минимизируем
+$$
+    Q\left(\hat{\beta_1}, \hat{\beta_2}\right) = \sum_{i = 1}^n \left(y_i - \hat{\beta_1} - \hat{\beta_2} x_i\right)^2
+$$
+
+Приравниваем к нулю частные производные и получаем систему нормальных уравнений:
+\begin{gather*}
+    \frac{\partial Q}{\partial \hat{\beta_1}} = -2\sum \left(y_i - \hat{\beta_1} - \hat{\beta_2} x_i\right) = 0 \\
+    \frac{\partial Q}{\partial \hat{\beta_2}} = -2\sum x_i \left(y_i - \hat{\beta_1} - \hat{\beta_2} x_i\right) = 0
+\end{gather*}
+
+Из первого уравнения:
+$$
+    \sum y_i = n\hat{\beta_1} + \hat{\beta_2} \sum x_i
+    \quad \Longrightarrow \quad
+    \bar{y} = \hat{\beta_1} + \hat{\beta_2}\bar{x}
+    \quad \Longrightarrow \quad
+    \hat{\beta_1} = \bar{y} - \hat{\beta_2}\bar{x}
+$$
+
+Это ровно то самое замечательное свойство с лекции: точка $\left(\bar{x}, \bar{y}\right)$ лежит на линии регрессии
+
+Подставляем $\hat{\beta_1}$ во второе уравнение:
+\begin{gather*}
+    \sum x_i \left(y_i - \bar{y} + \hat{\beta_2}\bar{x} - \hat{\beta_2} x_i\right) = 0 \\
+    \sum x_i \left(y_i - \bar{y}\right) = \hat{\beta_2} \sum x_i \left(x_i - \bar{x}\right)
+\end{gather*}
+
+Пользуясь тождествами выше, получаем формулу с лекции:
+$$
+    \hat{\beta_2} = \frac{\sum \left(x_i - \bar{x}\right)\left(y_i - \bar{y}\right)}{\sum \left(x_i - \bar{x}\right)^2} = \frac{sCov(x, y)}{sVar(x)}
+$$
+
+Интерпретация: $\hat{\beta_2}$ показывает, на сколько единиц в среднем изменится $y$, если $x$ вырастет на одну единицу. Знак $\hat{\beta_2}$ совпадает со знаком выборочной ковариации $x$ и $y$
+
+\subsubsection{Свойства остатков МНК}
+
+Нормальные уравнения — это в точности условия ортогональности остатков регрессорам. Отсюда сразу следуют свойства, которые на лекции были даны списком:
+
+\begin{itemize}
+    \item $\sum \hat{e_i} = 0$ — первое нормальное уравнение (верно, только если в модели есть константа)
+    \item $\sum x_i \hat{e_i} = 0$ — второе нормальное уравнение
+    \item $\bar{y} = \overline{\hat{y}}$ — следствие первого: $\sum \hat{y_i} = \sum \left(y_i - \hat{e_i}\right) = \sum y_i$
+\end{itemize}
+
+В матричном виде все нормальные уравнения записываются одной строкой:
+$$
+    X'e = 0
+    \quad \Longleftrightarrow \quad
+    X'\left(y - X\hat{\beta}\right) = 0
+    \quad \Longleftrightarrow \quad
+    X'X\hat{\beta} = X'y
+$$
+
+Если матрица $X'X$ обратима, отсюда получается формула с лекции: $\hat{\beta}_{OLS} = \left(X'X\right)^{-1}X'y$
+
+Геометрический смысл: $\hat{y} = X\left(X'X\right)^{-1}X'y$ — проекция вектора $y$ на линейную оболочку столбцов $X$, а вектор остатков $e$ ортогонален этой оболочке. МНК ищет ближайшую к $y$ точку среди тех, которые модель вообще способна описать
+
+\subsubsection{Разложение общей суммы квадратов}
+
+Запишем отклонение от среднего как сумму двух слагаемых:
+$$
+    y_i - \bar{y} = \left(y_i - \hat{y_i}\right) + \left(\hat{y_i} - \bar{y}\right) = \hat{e_i} + \left(\hat{y_i} - \bar{y}\right)
+$$
+
+Возводим в квадрат и суммируем:
+$$
+    \sum \left(y_i - \bar{y}\right)^2 = \sum \hat{e_i}^2 + \sum \left(\hat{y_i} - \bar{y}\right)^2 + 2\sum \hat{e_i}\left(\hat{y_i} - \bar{y}\right)
+$$
+
+Осталось показать, что перекрёстное слагаемое равно нулю:
+$$
+    \sum \hat{e_i}\left(\hat{y_i} - \bar{y}\right) = \sum \hat{e_i}\left(\hat{\beta_1} + \hat{\beta_2}x_i - \bar{y}\right) = \left(\hat{\beta_1} - \bar{y}\right)\underbrace{\sum \hat{e_i}}_{= \, 0} + \hat{\beta_2}\underbrace{\sum x_i \hat{e_i}}_{= \, 0} = 0
+$$
+
+Получаем $TSS = RSS + ESS$. Обратите внимание: доказательство целиком опирается на нормальные уравнения, поэтому без константы в модели разложение, вообще говоря, ломается
+
+\subsubsection{Коэффициент детерминации в парной регрессии}
+
+Задача: показать, что в парной регрессии $R^2 = \left(sCorr(x, y)\right)^2$
+
+Решение. Так как $\hat{y_i} - \bar{y} = \hat{\beta_2}\left(x_i - \bar{x}\right)$, то
+$$
+    ESS = \hat{\beta_2}^2 \sum \left(x_i - \bar{x}\right)^2 = \frac{\left(\sum \left(x_i - \bar{x}\right)\left(y_i - \bar{y}\right)\right)^2}{\sum \left(x_i - \bar{x}\right)^2}
+$$
+
+Делим на $TSS = \sum \left(y_i - \bar{y}\right)^2$:
+$$
+    R^2 = \frac{ESS}{TSS} = \frac{\left(\sum \left(x_i - \bar{x}\right)\left(y_i - \bar{y}\right)\right)^2}{\sum \left(x_i - \bar{x}\right)^2 \sum \left(y_i - \bar{y}\right)^2} = \left(sCorr(x, y)\right)^2
+$$
+
+То есть в парной регрессии $R^2$ не различает, что на что регрессируем: он одинаков для регрессии $y$ на $x$ и для регрессии $x$ на $y$
+
+\subsubsection{Числовой пример}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lrrrrr}
+        \toprule
+        $x_i$ & 1 & 2 & 3 & 4 & 5 \\
+        $y_i$ & 2 & 4 & 5 & 4 & 5 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Считаем средние: $\bar{x} = 3$, $\bar{y} = 4$
+
+\begin{gather*}
+    \sum \left(x_i - \bar{x}\right)\left(y_i - \bar{y}\right) = (-2)(-2) + (-1) \cdot 0 + 0 \cdot 1 + 1 \cdot 0 + 2 \cdot 1 = 6 \\
+    \sum \left(x_i - \bar{x}\right)^2 = 4 + 1 + 0 + 1 + 4 = 10
+\end{gather*}
+
+Отсюда
+$$
+    \hat{\beta_2} = \frac{6}{10} = 0.6, \qquad
+    \hat{\beta_1} = 4 - 0.6 \cdot 3 = 2.2, \qquad
+    \hat{y_i} = 2.2 + 0.6 x_i
+$$
+
+Прогнозы и остатки:
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lrrrrr}
+        \toprule
+        $\hat{y_i}$ & 2.8    & 3.4 & 4.0 & 4.6    & 5.2    \\
+        $\hat{e_i}$ & $-0.8$ & 0.6 & 1.0 & $-0.6$ & $-0.2$ \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Проверка свойств остатков: $\sum \hat{e_i} = 0$ и $\sum x_i \hat{e_i} = 0$
+
+Суммы квадратов: $RSS = 2.4$, $ESS = \hat{\beta_2}^2 \cdot 10 = 3.6$, $TSS = 6$. Действительно, $TSS = RSS + ESS$, а
+$$
+    R^2 = 1 - \frac{2.4}{6} = 0.6
+$$
+
+\subsubsection{Как это считается на Python}
+
+\begin{verbatim}
+import numpy as np
+import pandas as pd
+import statsmodels.api as sm
+
+df = pd.read_csv('cars.csv')   # speed (мили в час), dist (футы)
+x = df['speed'].to_numpy()
+y = df['dist'].to_numpy()
+
+# 1. МНК руками по формулам парной регрессии
+beta2 = np.sum((x - x.mean()) * (y - y.mean())) / np.sum((x - x.mean()) ** 2)
+beta1 = y.mean() - beta2 * x.mean()
+
+# 2. МНК в матричном виде
+X = sm.add_constant(x)                      # добавляем столбец из единиц
+beta = np.linalg.solve(X.T @ X, X.T @ y)    # надёжнее, чем np.linalg.inv
+
+# 3. МНК через statsmodels
+model = sm.OLS(y, X).fit()
+print(model.params)          # те же beta1, beta2
+print(model.summary())
+
+# 4. Суммы квадратов и коэффициент детерминации
+y_hat = X @ beta
+e = y - y_hat
+rss = np.sum(e ** 2)
+tss = np.sum((y - y.mean()) ** 2)
+ess = np.sum((y_hat - y.mean()) ** 2)
+
+print(rss + ess, tss)                 # совпадают
+print(1 - rss / tss, model.rsquared)  # тоже совпадают
+print(e.sum(), (x * e).sum())         # оба нуля с точностью до машинной
+\end{verbatim}
+
+Полезно помнить:
+
+\begin{itemize}
+    \item Константа не добавляется сама: без \texttt{sm.add\_constant} модель оценивается без свободного члена, и ломаются и $R^2$, и свойства остатков
+    \item Считать $\left(X'X\right)^{-1}$ через \texttt{np.linalg.inv} не нужно: \texttt{np.linalg.solve} и \texttt{np.linalg.lstsq} точнее и устойчивее численно
+    \item В \texttt{sklearn} за константу в \texttt{LinearRegression} отвечает параметр \texttt{fit\_intercept} (по умолчанию \texttt{True}), а $R^2$ считает метод \texttt{score}
+\end{itemize}
+
+\subsubsection{Подводные камни}
+
+\begin{itemize}
+    \item $R^2$ не убывает при добавлении любого нового регрессора, даже бессмысленного, поэтому сравнивать по нему модели с разным числом регрессоров нельзя
+    \item Регрессия $y$ на $x$ и регрессия $x$ на $y$ дают разные прямые. Их коэффициенты связаны соотношением $\hat{\beta}_{y|x} \cdot \hat{\beta}_{x|y} = R^2$
+    \item Высокий $R^2$ ничего не говорит о причинно-следственной связи
+    \item Единицы измерения: если заменить $x$ на $cx$, то $\hat{\beta_2}$ поделится на $c$, а прогнозы, остатки и $R^2$ не изменятся
+\end{itemize}
+
+\subsubsection{Задачи для самостоятельного решения}
+
+\begin{enumerate}
+    \item Показать, что в модели без константы $y_i = \beta x_i + \varepsilon_i$ МНК-оценка равна $\hat{\beta} = \dfrac{\sum x_i y_i}{\sum x_i^2}$
+    \item Показать, что в модели без константы, вообще говоря, $\sum \hat{e_i} \neq 0$, разложение $TSS = RSS + ESS$ не выполняется, а $R^2$, посчитанный по формуле $1 - RSS / TSS$, может оказаться отрицательным
+    \item Все $y_i$ увеличили на константу $c$. Как изменятся $\hat{\beta_1}$, $\hat{\beta_2}$, $RSS$ и $R^2$?
+    \item Показать, что $\hat{\beta_2} = sCorr(x, y) \cdot \sqrt{\dfrac{sVar(y)}{sVar(x)}}$
+    \item Взять датасет \texttt{cars} из лекции, построить регрессию длины тормозного пути на скорость и проинтерпретировать оба коэффициента. Имеет ли содержательный смысл $\hat{\beta_1}$?
+\end{enumerate}
 
 \end{document}
